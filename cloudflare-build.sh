@@ -8,12 +8,10 @@ export VITE_APP_NAME="TalentBridge"
 rm -rf app
 mkdir -p app
 
-cat .upload/chunk-* > /tmp/job-portal.tar.gz.b64
-base64 --decode /tmp/job-portal.tar.gz.b64 > /tmp/job-portal.tar.gz
+base64 --decode source_bundle.tar.gz.b64 > /tmp/job-portal-source.tar.gz
+echo "c5ae7c68f582735cee4c7b854d07f2955e51a140dd43fb3e96e8bba3bf31da12  /tmp/job-portal-source.tar.gz" | sha256sum -c -
+tar -xzf /tmp/job-portal-source.tar.gz -C app
 
-echo "4372085bbbd5c06d5c427111cbe48b7e4ca7895f82d9594d0236019cc0aa3b50  /tmp/job-portal.tar.gz" | sha256sum -c -
-
-tar -xzf /tmp/job-portal.tar.gz -C app
 cd app
-npm install
+npm install --no-audit --no-fund
 npm run build
