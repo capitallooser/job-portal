@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+export VITE_SUPABASE_URL="https://vizfrptpkdofnvykbtbh.supabase.co"
+export VITE_SUPABASE_ANON_KEY="sb_publishable_kMixAxteWAZ01apzxAnNig_eZEX5KI5"
+export VITE_APP_NAME="TalentBridge"
+
 rm -rf app
 mkdir -p app
 
