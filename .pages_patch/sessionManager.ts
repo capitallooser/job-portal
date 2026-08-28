@@ -1,3 +1,4 @@
+import { refreshSession } from './portalAuthApi'
 import type { TalentBridgeSession } from './authTypes'
 
 export const SESSION_STORAGE_KEY = 'talentbridge.session.v1'
@@ -100,3 +101,5 @@ export async function getValidAccessToken(): Promise<string | null> {
 
   return refreshInFlight
 }
+
+setRefreshImplementation(refreshSession)
