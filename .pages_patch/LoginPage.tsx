@@ -1,17 +1,11 @@
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Link, useNavigate } from 'react-router-dom'
-import { queryClient } from '../../lib/queryClient'
-import { signIn, withTimeout } from './authApi'
+import { Link } from 'react-router-dom'
+import { signIn } from './authApi'
 import { loginSchema, type LoginInput } from './authSchemas'
-import { fetchSessionProfile } from './useSessionProfile'
-
-const PROFILE_TIMEOUT_MS = 8_000
-const PROFILE_TIMEOUT_MESSAGE = 'You are signed in, but loading your portal access is taking longer than expected. Please refresh the page and try again.'
 
 export function LoginPage() {
-  const navigate = useNavigate()
   const [serverError, setServerError] = useState('')
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
@@ -20,26 +14,14 @@ export function LoginPage() {
   const onSubmit = handleSubmit(async (values) => {
     try {
       setServerError('')
+      await signIn(values)
 
-      const auth = await signIn(values)
-      const userId = auth.user?.id
-      if (!userId) throw new Error('Sign in completed, but no user session was returned. Please refresh and try again.')
-
-      const profile = await withTimeout(
-        fetchSessionProfile(userId),
-        PROFILE_TIMEOUT_MS,
-        PROFILE_TIMEOUT_MESSAGE,
-      )
-      if (!profile) throw new Error('Your account was signed in, but your portal profile could not be loaded. Please refresh and try again.')
-
-      queryClient.setQueryData(['session-profile'], profile)
-
-      if (profile.is_blocked || profile.approval_status !== 'approved') {
-        navigate('/pending-approval', { replace: true })
-        return
-      }
-
-      navigate(profile.role === 'candidate' ? '/jobs' : '/admin', { replace: true })
+      // The password grant is completed outside the Supabase auth client because
+      // some browser builds can hang after a successful /token 200 while saving
+      // the session. A full reload creates a fresh client that recovers the
+      // persisted session before protected routes resolve profile/role access.
+      window.history.replaceState(null, '', `${window.location.pathname}#/jobs`)
+      window.location.reload()
     } catch (error) {
       setServerError(error instanceof Error ? error.message : 'Login failed. Please try again.')
     }
