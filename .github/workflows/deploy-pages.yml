@@ -35,6 +35,9 @@ jobs:
           test -f app/package.json
           test -f app/index.html
           test -d app/src
+          cp .pages_patch/fallbackParser.ts app/src/features/ai-import/fallbackParser.ts
+          cp .pages_patch/ApplicationDetailPage.tsx app/src/features/applications/ApplicationDetailPage.tsx
+          cp .pages_patch/tsconfig.json app/tsconfig.json
 
       - name: Install dependencies
         working-directory: app
