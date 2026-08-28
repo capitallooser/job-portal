@@ -9,7 +9,11 @@ vi.mock('./authProfileApi', async () => {
   const actual = await vi.importActual<typeof import('./authProfileApi')>('./authProfileApi')
   return { ...actual, fetchSessionProfileByUserId: vi.fn() }
 })
-vi.mock('./sessionManager', () => ({ getCurrentUserId: vi.fn(), subscribeSession: vi.fn(() => () => undefined) }))
+vi.mock('./sessionManager', () => ({
+  getCurrentUserId: vi.fn(),
+  getValidAccessToken: vi.fn(async () => null),
+  subscribeSession: vi.fn(() => () => undefined),
+}))
 
 const base: SessionProfile = { id: 'u1', full_name: 'Candidate One', email: 'candidate1@neepanlok.com', mobile: '9999999999', approval_status: 'approved', is_blocked: false, approved_at: null, created_at: '2026-08-28T00:00:00Z', role: 'candidate' }
 function Probe() { const auth = useAuth(); return <div>{auth.status}</div> }
