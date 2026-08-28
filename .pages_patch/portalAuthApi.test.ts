@@ -1,38 +1,47 @@
 import { describe, expect, it, vi } from 'vitest'
 import { loginWithPassword, refreshSession } from './portalAuthApi'
 
-const session = {
-  accessToken: 'a',
-  refreshToken: 'r',
-  expiresAt: 1_700_003_600,
-  tokenType: 'bearer' as const,
+const authSession = {
+  access_token: 'access-token',
+  refresh_token: 'refresh-token',
+  expires_in: 3600,
+  expires_at: 1_700_003_600,
+  token_type: 'bearer',
   user: { id: 'u1', email: 'candidate1@neepanlok.com' },
 }
 
 describe('portal auth browser transport', () => {
-  it('sends a CORS-simple text/plain request to portal-auth', async () => {
-    const fetchImpl = vi.fn().mockResolvedValue(new Response(JSON.stringify(session), { status: 200 }))
+  it('signs in through a CORS-simple direct Auth REST request', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(new Response(JSON.stringify(authSession), { status: 200 }))
 
-    await loginWithPassword(
+    const result = await loginWithPassword(
       'candidate1@neepanlok.com',
       'Password123!',
       fetchImpl as unknown as typeof fetch,
     )
 
     const [url, init] = fetchImpl.mock.calls[0] as [string, RequestInit]
-    expect(url).toBe('http://127.0.0.1:54321/functions/v1/portal-auth')
+    expect(url).toContain('/auth/v1/token?grant_type=password&apikey=')
+    expect(url).not.toContain('/functions/v1/')
     expect(init.method).toBe('POST')
     expect(init.headers).toEqual({ 'Content-Type': 'text/plain' })
-    expect(String(url)).not.toContain('/auth/v1/token')
-    expect(JSON.parse(String(init.body))).toMatchObject({
-      action: 'login',
+    expect((init.headers as Record<string, string>).apikey).toBeUndefined()
+    expect(JSON.parse(String(init.body))).toEqual({
       email: 'candidate1@neepanlok.com',
+      password: 'Password123!',
+    })
+    expect(result).toEqual({
+      accessToken: 'access-token',
+      refreshToken: 'refresh-token',
+      expiresAt: 1_700_003_600,
+      tokenType: 'bearer',
+      user: { id: 'u1', email: 'candidate1@neepanlok.com' },
     })
   })
 
-  it('surfaces a friendly authentication error', async () => {
+  it('surfaces invalid credentials from Auth REST', async () => {
     const fetchImpl = vi.fn().mockResolvedValue(new Response(
-      JSON.stringify({ error: 'Invalid email or password' }),
+      JSON.stringify({ error_code: 'invalid_credentials', msg: 'Invalid login credentials' }),
       { status: 400 },
     ))
 
@@ -43,11 +52,16 @@ describe('portal auth browser transport', () => {
     )).rejects.toThrow('Invalid email or password')
   })
 
-  it('uses the same portal boundary for refresh', async () => {
-    const fetchImpl = vi.fn().mockResolvedValue(new Response(JSON.stringify(session), { status: 200 }))
-    await refreshSession('refresh-token-long-enough', fetchImpl as unknown as typeof fetch)
+  it('refreshes through the same CORS-simple direct Auth REST transport', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(new Response(JSON.stringify(authSession), { status: 200 }))
+
+    const result = await refreshSession('refresh-token-long-enough', fetchImpl as unknown as typeof fetch)
+
     const [url, init] = fetchImpl.mock.calls[0] as [string, RequestInit]
-    expect(url).toContain('/functions/v1/portal-auth')
-    expect(JSON.parse(String(init.body))).toMatchObject({ action: 'refresh' })
+    expect(url).toContain('/auth/v1/token?grant_type=refresh_token&apikey=')
+    expect(url).not.toContain('/functions/v1/')
+    expect(init.headers).toEqual({ 'Content-Type': 'text/plain' })
+    expect(JSON.parse(String(init.body))).toEqual({ refresh_token: 'refresh-token-long-enough' })
+    expect(result.accessToken).toBe('access-token')
   })
 })
