@@ -24,18 +24,17 @@ jobs:
         with:
           node-version: 22
 
-      - name: Reconstruct source
+      - name: Extract source ZIP
         shell: bash
         run: |
           set -euo pipefail
-          cat .pages_bundle/part-*.b64 > /tmp/job-portal.b64
-          base64 --decode /tmp/job-portal.b64 > /tmp/job-portal.tar.gz
-          gzip -t /tmp/job-portal.tar.gz
+          test -f job-portal-full-source.zip
           rm -rf app
           mkdir app
-          tar -xzf /tmp/job-portal.tar.gz -C app
+          unzip -q job-portal-full-source.zip -d app
           test -f app/package.json
           test -f app/index.html
+          test -d app/src
 
       - name: Install dependencies
         working-directory: app
