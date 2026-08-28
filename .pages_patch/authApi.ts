@@ -1,5 +1,7 @@
 import { supabase } from '../../lib/supabase'
+import { env } from '../../lib/env'
 import type { LoginInput, SignupInput } from './authSchemas'
+import { passwordSignInDirect } from './directAuth'
 
 const SIGNUP_TIMEOUT_MS = 10_000
 const LOGIN_TIMEOUT_MS = 8_000
@@ -40,13 +42,14 @@ export async function signUpCandidate(input: SignupInput) {
 }
 
 export async function signIn(input: LoginInput) {
-  const result = await withTimeout(
-    supabase.auth.signInWithPassword({ email: input.email, password: input.password }),
+  return await withTimeout(
+    passwordSignInDirect(input, {
+      supabaseUrl: env.VITE_SUPABASE_URL,
+      publishableKey: env.VITE_SUPABASE_ANON_KEY,
+    }),
     LOGIN_TIMEOUT_MS,
     LOGIN_TIMEOUT_MESSAGE,
   )
-  if (result.error) throw result.error
-  return result.data
 }
 
 export async function signOut() {
