@@ -35,6 +35,8 @@ jobs:
           test -f app/package.json
           test -f app/index.html
           test -d app/src
+
+          # Existing production patches
           cp .pages_patch/fallbackParser.ts app/src/features/ai-import/fallbackParser.ts
           cp .pages_patch/ApplicationDetailPage.tsx app/src/features/applications/ApplicationDetailPage.tsx
           cp .pages_patch/applicationStatus.ts app/src/features/applications/applicationStatus.ts
@@ -45,14 +47,43 @@ jobs:
           cp .pages_patch/JobEditorPage.tsx app/src/features/jobs/JobEditorPage.tsx
           cp .pages_patch/JobForm.tsx app/src/features/jobs/JobForm.tsx
           cp .pages_patch/UserApprovalsPage.tsx app/src/features/admin/UserApprovalsPage.tsx
-          cp .pages_patch/SignupPage.tsx app/src/features/auth/SignupPage.tsx
+
+          # TalentBridge simple-auth cutover
+          cp .pages_patch/authTypes.ts app/src/features/auth/authTypes.ts
+          cp .pages_patch/portalAuthApi.ts app/src/features/auth/portalAuthApi.ts
+          cp .pages_patch/portalAuthApi.test.ts app/src/features/auth/portalAuthApi.test.ts
+          cp .pages_patch/sessionManager.ts app/src/features/auth/sessionManager.ts
+          cp .pages_patch/sessionManager.test.ts app/src/features/auth/sessionManager.test.ts
+          cp .pages_patch/authProfileApi.ts app/src/features/auth/authProfileApi.ts
+          cp .pages_patch/authProfileApi.test.ts app/src/features/auth/authProfileApi.test.ts
+          cp .pages_patch/AuthProvider.tsx app/src/features/auth/AuthProvider.tsx
+          cp .pages_patch/AuthProvider.test.tsx app/src/features/auth/AuthProvider.test.tsx
+          cp .pages_patch/useSessionProfile.ts app/src/features/auth/useSessionProfile.ts
+          cp .pages_patch/ProtectedRoute.tsx app/src/features/auth/ProtectedRoute.tsx
+          cp .pages_patch/RoleRoute.tsx app/src/features/auth/RoleRoute.tsx
+          cp .pages_patch/RoleRoute.test.tsx app/src/features/auth/RoleRoute.test.tsx
           cp .pages_patch/LoginPage.tsx app/src/features/auth/LoginPage.tsx
+          cp .pages_patch/LoginPage.test.tsx app/src/features/auth/LoginPage.test.tsx
           cp .pages_patch/authApi.ts app/src/features/auth/authApi.ts
           cp .pages_patch/authApi.test.ts app/src/features/auth/authApi.test.ts
-          cp .pages_patch/directAuth.ts app/src/features/auth/directAuth.ts
-          cp .pages_patch/directAuth.test.ts app/src/features/auth/directAuth.test.ts
-          cp .pages_patch/useSessionProfile.ts app/src/features/auth/useSessionProfile.ts
-          cp .pages_patch/useSessionProfile.test.ts app/src/features/auth/useSessionProfile.test.ts
+          cp .pages_patch/recoveryRedirect.ts app/src/features/auth/recoveryRedirect.ts
+          cp .pages_patch/recoveryRedirect.test.ts app/src/features/auth/recoveryRedirect.test.ts
+          cp .pages_patch/SignupPage.tsx app/src/features/auth/SignupPage.tsx
+          cp .pages_patch/ForgotPasswordPage.tsx app/src/features/auth/ForgotPasswordPage.tsx
+          cp .pages_patch/ResetPasswordPage.tsx app/src/features/auth/ResetPasswordPage.tsx
+          cp .pages_patch/PendingApprovalPage.tsx app/src/features/auth/PendingApprovalPage.tsx
+          cp .pages_patch/supabase.ts app/src/lib/supabase.ts
+          cp .pages_patch/supabase.test.ts app/src/lib/supabase.test.ts
+          cp .pages_patch/providers.tsx app/src/app/providers.tsx
+          cp .pages_patch/Topbar.tsx app/src/components/layout/Topbar.tsx
+          cp .pages_patch/jobsApi.ts app/src/features/jobs/jobsApi.ts
+          cp .pages_patch/savedJobsApi.ts app/src/features/jobs/savedJobsApi.ts
+          cp .pages_patch/applicationsApi.ts app/src/features/applications/applicationsApi.ts
+          cp .pages_patch/profileApi.ts app/src/features/profile/profileApi.ts
+          cp .pages_patch/settingsApi.ts app/src/features/admin/settingsApi.ts
+          cp .pages_patch/notificationsApi.ts app/src/features/notifications/notificationsApi.ts
+          cp .pages_patch/noBrowserAuth.test.ts app/src/features/auth/noBrowserAuth.test.ts
+          cp .pages_patch/main.tsx app/src/main.tsx
           cp .pages_patch/tsconfig.json app/tsconfig.json
 
       - name: Install dependencies
@@ -61,7 +92,29 @@ jobs:
 
       - name: Test critical actions
         working-directory: app
-        run: npm test -- --run src/features/jobs/jobActions.test.ts src/features/jobs/jobMappers.publish.test.ts src/features/auth/authApi.test.ts src/features/auth/directAuth.test.ts src/features/auth/useSessionProfile.test.ts
+        run: |
+          npm test -- --run \
+            src/features/auth/sessionManager.test.ts \
+            src/features/auth/portalAuthApi.test.ts \
+            src/features/auth/authProfileApi.test.ts \
+            src/features/auth/AuthProvider.test.tsx \
+            src/features/auth/LoginPage.test.tsx \
+            src/features/auth/authApi.test.ts \
+            src/features/auth/recoveryRedirect.test.ts \
+            src/features/auth/noBrowserAuth.test.ts \
+            src/features/auth/RoleRoute.test.tsx \
+            src/lib/supabase.test.ts \
+            src/features/jobs/jobActions.test.ts \
+            src/features/jobs/jobMappers.publish.test.ts
+
+      - name: Reject browser Supabase Auth session calls
+        shell: bash
+        run: |
+          set -euo pipefail
+          if grep -R -nE 'supabase\.auth\.(getUser|getSession|signInWithPassword|onAuthStateChange|signOut)\(' app/src; then
+            echo 'Forbidden Supabase browser Auth session call found.' >&2
+            exit 1
+          fi
 
       - name: Typecheck
         working-directory: app
