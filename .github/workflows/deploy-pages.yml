@@ -40,15 +40,18 @@ jobs:
           cp .pages_patch/applicationStatus.ts app/src/features/applications/applicationStatus.ts
           cp .pages_patch/jobActions.ts app/src/features/jobs/jobActions.ts
           cp .pages_patch/jobActions.test.ts app/src/features/jobs/jobActions.test.ts
+          cp .pages_patch/SignupPage.tsx app/src/features/auth/SignupPage.tsx
+          cp .pages_patch/authApi.ts app/src/features/auth/authApi.ts
+          cp .pages_patch/authApi.test.ts app/src/features/auth/authApi.test.ts
           cp .pages_patch/tsconfig.json app/tsconfig.json
 
       - name: Install dependencies
         working-directory: app
         run: npm install --no-audit --no-fund
 
-      - name: Test publish action
+      - name: Test critical actions
         working-directory: app
-        run: npm test -- --run src/features/jobs/jobActions.test.ts
+        run: npm test -- --run src/features/jobs/jobActions.test.ts src/features/auth/authApi.test.ts
 
       - name: Typecheck
         working-directory: app
