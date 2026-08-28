@@ -8,10 +8,15 @@ describe('withTimeout', () => {
 
   it('rejects instead of leaving signup spinning forever', async () => {
     vi.useFakeTimers()
-    const never = new Promise<string>(() => {})
-    const result = withTimeout(never, 1000)
-    await vi.advanceTimersByTimeAsync(1000)
-    await expect(result).rejects.toThrow('Signup is taking longer than expected')
-    vi.useRealTimers()
+    try {
+      const never = new Promise<string>(() => {})
+      const result = withTimeout(never, 1000)
+      const rejection = expect(result).rejects.toThrow('Signup is taking longer than expected')
+
+      await vi.advanceTimersByTimeAsync(1000)
+      await rejection
+    } finally {
+      vi.useRealTimers()
+    }
   })
 })
