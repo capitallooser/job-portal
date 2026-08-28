@@ -51,11 +51,14 @@ export async function passwordSignInDirect(
   const now = options.now ?? Date.now
   const baseUrl = options.supabaseUrl.replace(/\/$/, '')
 
-  const response = await fetchImpl(`${baseUrl}/auth/v1/token?grant_type=password`, {
+  // Use a same-project Edge Function as the password exchange proxy. The browser
+  // sends a simple text/plain POST with no custom auth headers, avoiding the
+  // Auth endpoint preflight that can stall on GitHub Pages. The function performs
+  // the password grant server-to-server and returns the normal Supabase session.
+  const response = await fetchImpl(`${baseUrl}/functions/v1/password-login`, {
     method: 'POST',
     headers: {
-      apikey: options.publishableKey,
-      'Content-Type': 'application/json',
+      'Content-Type': 'text/plain;charset=UTF-8',
     },
     body: JSON.stringify({
       email: credentials.email.trim(),
