@@ -27,7 +27,7 @@ describe('passwordSignInDirect', () => {
       {
         supabaseUrl: 'https://vizfrptpkdofnvykbtbh.supabase.co',
         publishableKey: 'public-test-key',
-        fetchImpl,
+        fetchImpl: fetchImpl as unknown as typeof fetch,
         storage: storageAdapter,
         now: () => 1_700_000_000_000,
       },
@@ -59,7 +59,7 @@ describe('passwordSignInDirect', () => {
       {
         supabaseUrl: 'https://vizfrptpkdofnvykbtbh.supabase.co',
         publishableKey: 'public-test-key',
-        fetchImpl,
+        fetchImpl: fetchImpl as unknown as typeof fetch,
         storage: { getItem: () => null, setItem, removeItem: () => undefined },
       },
     )).rejects.toThrow('Invalid login credentials')
