@@ -40,6 +40,11 @@ jobs:
           cp .pages_patch/applicationStatus.ts app/src/features/applications/applicationStatus.ts
           cp .pages_patch/jobActions.ts app/src/features/jobs/jobActions.ts
           cp .pages_patch/jobActions.test.ts app/src/features/jobs/jobActions.test.ts
+          cp .pages_patch/jobMappers.ts app/src/features/jobs/jobMappers.ts
+          cp .pages_patch/jobMappers.publish.test.ts app/src/features/jobs/jobMappers.publish.test.ts
+          cp .pages_patch/JobEditorPage.tsx app/src/features/jobs/JobEditorPage.tsx
+          cp .pages_patch/JobForm.tsx app/src/features/jobs/JobForm.tsx
+          cp .pages_patch/UserApprovalsPage.tsx app/src/features/admin/UserApprovalsPage.tsx
           cp .pages_patch/SignupPage.tsx app/src/features/auth/SignupPage.tsx
           cp .pages_patch/authApi.ts app/src/features/auth/authApi.ts
           cp .pages_patch/authApi.test.ts app/src/features/auth/authApi.test.ts
@@ -51,7 +56,7 @@ jobs:
 
       - name: Test critical actions
         working-directory: app
-        run: npm test -- --run src/features/jobs/jobActions.test.ts src/features/auth/authApi.test.ts
+        run: npm test -- --run src/features/jobs/jobActions.test.ts src/features/jobs/jobMappers.publish.test.ts src/features/auth/authApi.test.ts
 
       - name: Typecheck
         working-directory: app
