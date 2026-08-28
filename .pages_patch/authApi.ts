@@ -1,60 +1,28 @@
+import { queryClient } from '../../lib/queryClient'
 import { supabase } from '../../lib/supabase'
-import { env } from '../../lib/env'
 import type { LoginInput, SignupInput } from './authSchemas'
-import { passwordSignInDirect } from './directAuth'
-
-const SIGNUP_TIMEOUT_MS = 10_000
-const LOGIN_TIMEOUT_MS = 8_000
-const SIGNUP_TIMEOUT_MESSAGE = 'Signup is taking longer than expected. Your account may already have been created. Please wait a moment, then try signing in instead of submitting again.'
-const LOGIN_TIMEOUT_MESSAGE = 'Sign in is taking longer than expected. Please refresh the page and try again.'
-
-export async function withTimeout<T>(
-  promise: Promise<T>,
-  timeoutMs = SIGNUP_TIMEOUT_MS,
-  timeoutMessage = SIGNUP_TIMEOUT_MESSAGE,
-): Promise<T> {
-  let timer: ReturnType<typeof setTimeout> | undefined
-  const timeout = new Promise<never>((_, reject) => {
-    timer = setTimeout(() => reject(new Error(timeoutMessage)), timeoutMs)
-  })
-
-  try {
-    return await Promise.race([promise, timeout])
-  } finally {
-    if (timer) clearTimeout(timer)
-  }
-}
+import { loginWithPassword, revokeSession } from './portalAuthApi'
+import { clearSession, getCurrentAccessToken, writeSession } from './sessionManager'
 
 export async function signUpCandidate(input: SignupInput) {
-  const result = await withTimeout(supabase.auth.signUp({
-    email: input.email,
-    password: input.password,
-    options: { data: { full_name: input.fullName, mobile: input.mobile } },
-  }))
-
-  if (result.error) throw result.error
-
-  if (result.data.session) {
-    await supabase.auth.signOut()
-  }
-
-  return result.data
+  const { data, error } = await supabase.auth.signUp({ email: input.email, password: input.password, options: { data: { full_name: input.fullName, mobile: input.mobile } } })
+  if (error) throw error
+  return data
 }
 
 export async function signIn(input: LoginInput) {
-  return await withTimeout(
-    passwordSignInDirect(input, {
-      supabaseUrl: env.VITE_SUPABASE_URL,
-      publishableKey: env.VITE_SUPABASE_ANON_KEY,
-    }),
-    LOGIN_TIMEOUT_MS,
-    LOGIN_TIMEOUT_MESSAGE,
-  )
+  clearSession()
+  queryClient.clear()
+  const session = await loginWithPassword(input.email, input.password)
+  writeSession(session)
+  return session
 }
 
 export async function signOut() {
-  const { error } = await supabase.auth.signOut()
-  if (error) throw error
+  const accessToken = getCurrentAccessToken()
+  clearSession()
+  queryClient.clear()
+  if (accessToken) void revokeSession(accessToken).catch(() => undefined)
 }
 
 export async function requestPasswordReset(email: string) {
