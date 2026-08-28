@@ -1,0 +1,1 @@
+import{supabase}from'../../lib/supabase';import{getCurrentUserId}from'../auth/sessionManager';export async function updateProfile(input:{full_name:string;mobile:string}){const userId=getCurrentUserId();if(!userId)throw new Error('Sign in required');const{data,error}=await supabase.from('profiles').update(input).eq('id',userId).select().single();if(error)throw error;return data}
