@@ -38,11 +38,17 @@ jobs:
           cp .pages_patch/fallbackParser.ts app/src/features/ai-import/fallbackParser.ts
           cp .pages_patch/ApplicationDetailPage.tsx app/src/features/applications/ApplicationDetailPage.tsx
           cp .pages_patch/applicationStatus.ts app/src/features/applications/applicationStatus.ts
+          cp .pages_patch/jobActions.ts app/src/features/jobs/jobActions.ts
+          cp .pages_patch/jobActions.test.ts app/src/features/jobs/jobActions.test.ts
           cp .pages_patch/tsconfig.json app/tsconfig.json
 
       - name: Install dependencies
         working-directory: app
         run: npm install --no-audit --no-fund
+
+      - name: Test publish action
+        working-directory: app
+        run: npm test -- --run src/features/jobs/jobActions.test.ts
 
       - name: Typecheck
         working-directory: app
