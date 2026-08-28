@@ -6,7 +6,7 @@ describe('passwordSignInDirect', () => {
     vi.restoreAllMocks()
   })
 
-  it('persists a successful password session in Supabase browser storage', async () => {
+  it('uses the simple password-login proxy without preflight-triggering auth headers', async () => {
     const storage = new Map<string, string>()
     const storageAdapter = {
       getItem: (key: string) => storage.get(key) ?? null,
@@ -34,7 +34,12 @@ describe('passwordSignInDirect', () => {
     )
 
     expect(fetchImpl).toHaveBeenCalledOnce()
-    expect(fetchImpl.mock.calls[0]?.[0]).toBe('https://vizfrptpkdofnvykbtbh.supabase.co/auth/v1/token?grant_type=password')
+    expect(fetchImpl.mock.calls[0]?.[0]).toBe('https://vizfrptpkdofnvykbtbh.supabase.co/functions/v1/password-login')
+    const request = fetchImpl.mock.calls[0]?.[1] as RequestInit
+    const headers = new Headers(request.headers)
+    expect(headers.get('content-type')).toBe('text/plain;charset=UTF-8')
+    expect(headers.has('apikey')).toBe(false)
+
     expect(result.user).toEqual(user)
     expect(result.session.access_token).toBe('access-123')
 
