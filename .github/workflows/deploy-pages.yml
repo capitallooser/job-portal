@@ -49,6 +49,8 @@ jobs:
           cp .pages_patch/LoginPage.tsx app/src/features/auth/LoginPage.tsx
           cp .pages_patch/authApi.ts app/src/features/auth/authApi.ts
           cp .pages_patch/authApi.test.ts app/src/features/auth/authApi.test.ts
+          cp .pages_patch/directAuth.ts app/src/features/auth/directAuth.ts
+          cp .pages_patch/directAuth.test.ts app/src/features/auth/directAuth.test.ts
           cp .pages_patch/useSessionProfile.ts app/src/features/auth/useSessionProfile.ts
           cp .pages_patch/useSessionProfile.test.ts app/src/features/auth/useSessionProfile.test.ts
           cp .pages_patch/tsconfig.json app/tsconfig.json
@@ -59,7 +61,7 @@ jobs:
 
       - name: Test critical actions
         working-directory: app
-        run: npm test -- --run src/features/jobs/jobActions.test.ts src/features/jobs/jobMappers.publish.test.ts src/features/auth/authApi.test.ts src/features/auth/useSessionProfile.test.ts
+        run: npm test -- --run src/features/jobs/jobActions.test.ts src/features/jobs/jobMappers.publish.test.ts src/features/auth/authApi.test.ts src/features/auth/directAuth.test.ts src/features/auth/useSessionProfile.test.ts
 
       - name: Typecheck
         working-directory: app
